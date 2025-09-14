@@ -52,7 +52,7 @@ except Exception as e:
 
 # ---- Login form ----
 try:
-    name, auth_status, username = authenticator.login("Login", "main")
+name, auth_status, username = authenticator.login("main", "Login")
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
