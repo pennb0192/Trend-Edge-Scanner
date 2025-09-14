@@ -1,43 +1,36 @@
 import streamlit as st
 import streamlit_authenticator as stauth
 
-# ---------------- BOOT 1 ----------------
+st.set_page_config(page_title="Trend Edge Scanner", layout="wide")
+
 st.write("BOOT 1: app.py loaded")
 
-# ---------------- BOOT 2 ----------------
+# ---- Load secrets from TOML ----
 try:
-    credentials = st.secrets["credentials"]
-    cookie = st.secrets["cookie"]
+    credentials = st.secrets["credentials"]          # whole [credentials] table
+    cookie_cfg   = st.secrets["cookie"]              # whole [cookie] table
     st.write("BOOT 2: secrets loaded")
-    st.write({"credentials": "ok", "cookie": "ok"})
+    st.json({"credentials": "ok", "cookie": "ok"})
 except Exception as e:
     st.error("ERROR loading secrets")
     st.exception(e)
     st.stop()
 
-# ---------------- BOOT 3 ----------------
+# ---- Prepare cookie settings ----
 try:
-    cookie_name = cookie["name"]
-    cookie_key = cookie["key"]
-    cookie_days = cookie["expiry_days"]
+    cookie_name = cookie_cfg.get("name", "trend_edge_auth")
+    cookie_key  = cookie_cfg.get("key", "change_me")
+    cookie_days = int(cookie_cfg.get("expiry_days", 30))
     st.write("BOOT 3: credentials & cookie prepared")
 except Exception as e:
-    st.error("ERROR preparing credentials/cookie")
+    st.error("ERROR preparing cookie settings")
     st.exception(e)
     st.stop()
 
-# ---------------- BOOT 4 ----------------
-try:
-    st.write("BOOT 4: streamlit_authenticator imported")
-except Exception as e:
-    st.error("ERROR importing streamlit_authenticator")
-    st.exception(e)
-    st.stop()
-
-# ---------------- BOOT 5 ----------------
+# ---- Create authenticator ----
 try:
     authenticator = stauth.Authenticate(
-        credentials,
+        credentials,   # expects the [credentials] table from TOML
         cookie_name,
         cookie_key,
         cookie_days,
@@ -48,28 +41,27 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# ---------------- LOGIN ----------------
+# ---- Login UI ----
 try:
-    # Correct call: (form_name, location)
-    auth_result = authenticator.login("Login", "main")
+    # Use either positional OR keyword for location (not both).
+    auth_result = authenticator.login("Login", "main")  # <- positional is simplest
 
     if auth_result is None:
-        st.stop()
+        st.stop()  # wait for user to submit the form
 
     name, auth_status, username = auth_result
-    st.write(f"BOOT 6: login called; auth_status={auth_status}")
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
     st.stop()
 
-# ---------------- MAIN ROUTING ----------------
+# ---- Main routing ----
 if auth_status:
     authenticator.logout("Logout", "sidebar")
     st.success(f"Welcome, {name}!")
     st.title("Trend Edge Scanner")
-    st.write("BOOT 7: logged in, main content goes here.")
+    st.write("You are logged in. Main content goes here.")
 elif auth_status is False:
     st.error("Username/password is incorrect")
 else:
-    st.warning("Please enter your username and password")
+    st.info("Please log in to continue.")
