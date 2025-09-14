@@ -1,15 +1,16 @@
 import streamlit as st
 import streamlit_authenticator as stauth
 
-st.set_page_config(page_title="Trend Edge Scanner", layout="centered")
-
-# --- Boot Step 1 ---
+# --- BOOT 1 ---
 st.write("BOOT 1: app.py loaded")
 
 # --- Load secrets ---
 try:
     credentials = st.secrets["credentials"]
     cookie = st.secrets["cookie"]
+    cookie_name = cookie["name"]
+    cookie_key = cookie["key"]
+    cookie_expiry = cookie["expiry_days"]
     st.write("BOOT 2: secrets loaded")
     st.json({"credentials": "ok", "cookie": "ok"})
 except Exception as e:
@@ -17,27 +18,15 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# --- Prepare credentials & cookie ---
-try:
-    cookie_name = cookie["name"]
-    cookie_key = cookie["key"]
-    cookie_expiry = cookie["expiry_days"]
-
-    st.write("BOOT 3: credentials & cookie prepared")
-except Exception as e:
-    st.error("ERROR preparing credentials & cookie")
-    st.exception(e)
-    st.stop()
-
-# --- Create authenticator ---
+# --- Authenticator ---
 try:
     authenticator = stauth.Authenticate(
-        credentials,
-        cookie_name,
-        cookie_key,
-        cookie_expiry,
+        credentials,           # full [credentials] table from TOML
+        cookie_name,           # cookie name
+        cookie_key,            # cookie key
+        cookie_expiry          # cookie expiry
     )
-    st.write("BOOT 5: authenticator created")
+    st.write("BOOT 3: authenticator created")
 except Exception as e:
     st.error("ERROR creating authenticator")
     st.exception(e)
@@ -45,30 +34,20 @@ except Exception as e:
 
 # --- Login UI ---
 try:
-    # Location must be "main" or "sidebar"
-    auth_result = authenticator.login("main")
-
-    if auth_result is None:
-        st.warning("Please enter your credentials")
-        st.stop()
-
-    name, auth_status, username = auth_result
-    st.write(f"BOOT 6: login called; auth_status={auth_status}")
-
+    name, auth_status, username = authenticator.login("Login", "main")
+    st.write("BOOT 4: login form rendered")
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
     st.stop()
 
-# --- Main routing ---
+# --- Routing ---
 if auth_status:
     authenticator.logout("Logout", "sidebar")
     st.success(f"Welcome, {name}!")
     st.title("Trend Edge Scanner")
-    st.write("BOOT 7: logged in, main content goes here.")
-
+    st.write("BOOT 5: Logged in, main content goes here.")
 elif auth_status is False:
     st.error("Username/password is incorrect")
-
-elif auth_status is None:
+else:
     st.warning("Please enter your username and password")
