@@ -60,7 +60,7 @@ except Exception as e:
 # --- Login UI ---
 try:
     # Streamlit Authenticator: returns a tuple OR None while waiting for input
-    auth_result = authenticator.login("Login", "main")
+    auth_result = authenticator.login("Login", location="main")
 
     if auth_result is None:
         # User hasn't submitted yet; pause the script cleanly
