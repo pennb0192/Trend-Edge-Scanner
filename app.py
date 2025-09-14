@@ -1,37 +1,40 @@
 import streamlit as st
 import streamlit_authenticator as stauth
 
-st.set_page_config(page_title="Trend Edge Scanner")
-
+# ---------------- BOOT 1 ----------------
 st.write("BOOT 1: app.py loaded")
 
-# ---------- Load secrets ----------
+# ---------------- BOOT 2 ----------------
 try:
-    raw_credentials = st.secrets["credentials"]   # read-only object
-    raw_cookie = st.secrets["cookie"]             # read-only object
+    credentials = st.secrets["credentials"]
+    cookie = st.secrets["cookie"]
     st.write("BOOT 2: secrets loaded")
+    st.write({"credentials": "ok", "cookie": "ok"})
 except Exception as e:
     st.error("ERROR loading secrets")
     st.exception(e)
     st.stop()
 
-# ---------- Convert to mutable dicts ----------
-# Build a plain-Python dict from st.secrets so the library can mutate it
-credentials = {"usernames": {}}
-for user, data in raw_credentials["usernames"].items():
-    credentials["usernames"][user] = {
-        "email": data["email"],
-        "name": data["name"],
-        "password": data["password"],
-    }
+# ---------------- BOOT 3 ----------------
+try:
+    cookie_name = cookie["name"]
+    cookie_key = cookie["key"]
+    cookie_days = cookie["expiry_days"]
+    st.write("BOOT 3: credentials & cookie prepared")
+except Exception as e:
+    st.error("ERROR preparing credentials/cookie")
+    st.exception(e)
+    st.stop()
 
-cookie_name = raw_cookie.get("name", "trend_edge_auth")
-cookie_key = raw_cookie.get("key", "change_this_key")
-cookie_days = int(raw_cookie.get("expiry_days", 30))
+# ---------------- BOOT 4 ----------------
+try:
+    st.write("BOOT 4: streamlit_authenticator imported")
+except Exception as e:
+    st.error("ERROR importing streamlit_authenticator")
+    st.exception(e)
+    st.stop()
 
-st.write("BOOT 3: credentials & cookie prepared")
-
-# ---------- Create authenticator ----------
+# ---------------- BOOT 5 ----------------
 try:
     authenticator = stauth.Authenticate(
         credentials,
@@ -45,26 +48,28 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# ---------- Login UI ----------
+# ---------------- LOGIN ----------------
 try:
-    # NOTE: label first, then location (as keyword)
-    auth_result = authenticator.login("Login", location="main")
+    # Correct call: (form_name, location)
+    auth_result = authenticator.login("Login", "main")
 
-    # When the form hasn’t been submitted yet, login() returns None
     if auth_result is None:
         st.stop()
 
     name, auth_status, username = auth_result
+    st.write(f"BOOT 6: login called; auth_status={auth_status}")
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
     st.stop()
 
-# ---------- Main routing ----------
+# ---------------- MAIN ROUTING ----------------
 if auth_status:
     authenticator.logout("Logout", "sidebar")
     st.success(f"Welcome, {name}!")
     st.title("Trend Edge Scanner")
-    st.write("Logged in — put your main content here.")
+    st.write("BOOT 7: logged in, main content goes here.")
+elif auth_status is False:
+    st.error("Username/password is incorrect")
 else:
-    st.error("Username or password is incorrect")
+    st.warning("Please enter your username and password")
