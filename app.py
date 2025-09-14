@@ -43,20 +43,36 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# ---------- login UI ----------
+# --- Login UI ---
 try:
-    # v0.4.2 uses login(location, form_name) – use keywords to avoid order issues
-    auth_result = authenticator.login(location="main", form_name="Login")
+    # Streamlit Authenticator: takes (form_name, location)
+    auth_result = authenticator.login("Login", "main")
 
     if auth_result is None:
-        st.stop()  # user hasn’t submitted yet
+        st.warning("Please enter your credentials")
+        st.stop()
 
     name, auth_status, username = auth_result
     st.write(f"BOOT 6: login called; auth_status={auth_status}")
+
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
     st.stop()
+
+# --- Main routing ---
+if auth_status:
+    authenticator.logout("Logout", "sidebar")
+    st.success(f"Welcome, {name}!")
+    st.title("Trend Edge Scanner")
+    st.write("BOOT 7: logged in, main content goes here.")
+
+elif auth_status is False:
+    st.error("Username/password is incorrect")
+
+elif auth_status is None:
+    st.warning("Please enter your username and password")
+
 
 # ---------- main routing ----------
 if auth_status:
