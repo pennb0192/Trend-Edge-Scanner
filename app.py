@@ -57,18 +57,24 @@ except Exception as e:
     st.stop()
 
 # --- Login UI ---
+# --- Login UI ---
 try:
-    # location first, then form name
+    # Streamlit Authenticator: returns a tuple OR None while waiting for input
     auth_result = authenticator.login("Login", "main")
-if auth_result is not None:
+
+    if auth_result is None:
+        # User hasn't submitted yet; pause the script cleanly
+        st.write("Waiting for credentials...")
+        st.stop()
+
     name, auth_status, username = auth_result
-else:
-    name, auth_status, username = None, None, None
-    st.write("BOOT 6: login called:", {"auth_status": auth_status})
+    st.write(f"BOOT 6: login called; auth_status={auth_status}")
+
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
     st.stop()
+
 # ---- Main routing ----
 if auth_status:
     authenticator.logout("Logout", "sidebar")
@@ -76,6 +82,9 @@ if auth_status:
     st.title("Trend Edge Scanner")
     st.write("BOOT 7: logged in, main content goes here.")
 elif auth_status is False:
-    st.error("Username/password is incorrect.")
+    st.error("Username/password is incorrect")
+elif auth_status is None:
+    st.warning("Please enter your username and password")
+
 else:
     st.info("Please log in.")
