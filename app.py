@@ -52,7 +52,15 @@ except Exception as e:
 
 # ---- Login form ----
 try:
-    name, auth_status, username = authenticator.login("main", "Login")
+    # v0.4.2 returns None until the form is submitted
+    auth_result = authenticator.login("Login", "main")
+
+    if auth_result is None:
+        # Form not submitted yet; stop the script cleanly
+        st.stop()
+
+    # After submit, this is a 3-tuple
+    name, auth_status, username = auth_result
 
 except Exception as e:
     st.error("ERROR during login()")
