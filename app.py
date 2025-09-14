@@ -4,22 +4,24 @@ import streamlit_authenticator as stauth
 # --- BOOT 1: app.py loaded ---
 st.write("BOOT 1: app.py loaded")
 
-# --- BOOT 2: load secrets ---
+# --- Load secrets safely ---
 try:
     credentials = st.secrets["credentials"]
-    cookie_cfg = st.secrets["cookie"]
+    cookie = st.secrets["cookie"]
     st.write("BOOT 2: secrets loaded")
-    st.json({"credentials": "ok", "cookie": "ok"})
 except Exception as e:
     st.error("ERROR loading secrets")
     st.exception(e)
     st.stop()
 
-# --- BOOT 3: prepare credentials & cookie ---
+# --- Prepare credentials & cookie ---
 try:
-    cookie_name = cookie_cfg.get("name")
-    cookie_key = cookie_cfg.get("key")
-    cookie_days = cookie_cfg.get("expiry_days")
+    st.write("BOOT 3: credentials & cookie prepared")
+except Exception as e:
+    st.error("ERROR preparing credentials & cookie")
+    st.exception(e)
+    st.stop()
+
 
     st.write("BOOT 3: credentials & cookie prepared")
 except Exception as e:
