@@ -59,7 +59,11 @@ except Exception as e:
 # --- Login UI ---
 try:
     # location first, then form name
-    name, auth_status, username = authenticator.login("main", "Login")
+    auth_result = authenticator.login("Login", "main")
+if auth_result is not None:
+    name, auth_status, username = auth_result
+else:
+    name, auth_status, username = None, None, None
     st.write("BOOT 6: login called:", {"auth_status": auth_status})
 except Exception as e:
     st.error("ERROR during login()")
