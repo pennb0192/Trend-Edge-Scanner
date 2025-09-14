@@ -56,15 +56,15 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# ---- Login UI ----
+# --- Login UI ---
 try:
-    name, auth_status, username = authenticator.login("Login", "main")
-    st.write("BOOT 6: login called", {"auth_status": auth_status})
+    # location first, then form name
+    name, auth_status, username = authenticator.login("main", "Login")
+    st.write("BOOT 6: login called:", {"auth_status": auth_status})
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
     st.stop()
-
 # ---- Main routing ----
 if auth_status:
     authenticator.logout("Logout", "sidebar")
