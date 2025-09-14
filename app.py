@@ -1,53 +1,71 @@
 import streamlit as st
 import streamlit_authenticator as stauth
 
-# --- BOOT 1 ---
+st.set_page_config(page_title="Trend Edge Scanner")
+
 st.write("BOOT 1: app.py loaded")
 
-# --- Load secrets ---
+# ---- Load & prepare config from Secrets (read-only) ----
 try:
-    credentials = st.secrets["credentials"]
-    cookie = st.secrets["cookie"]
-    cookie_name = cookie["name"]
-    cookie_key = cookie["key"]
-    cookie_expiry = cookie["expiry_days"]
+    sec = st.secrets
     st.write("BOOT 2: secrets loaded")
-    st.json({"credentials": "ok", "cookie": "ok"})
+    st.json({
+        "credentials": "ok" if "credentials" in sec else "missing",
+        "cookie": "ok" if "cookie" in sec else "missing",
+    })
+
+    # Build a *mutable* credentials dict from the read-only secrets
+    raw_users = sec["credentials"]["usernames"]
+    creds_usernames = {}
+    for uname, u in raw_users.items():
+        creds_usernames[uname] = {
+            "email": u["email"],
+            "name": u["name"],
+            "password": u["password"],  # <-- bcrypt hash from your Secrets
+        }
+    credentials = {"usernames": creds_usernames}
+
+    cookie_cfg = sec["cookie"]
+    cookie_name = cookie_cfg["name"]
+    cookie_key = cookie_cfg["key"]
+    cookie_expiry = int(cookie_cfg.get("expiry_days", 30))
+
+    st.write("BOOT 3: credentials & cookie prepared")
 except Exception as e:
-    st.error("ERROR loading secrets")
+    st.error("ERROR loading secrets / preparing configs")
     st.exception(e)
     st.stop()
 
-# --- Authenticator ---
+# ---- Create authenticator ----
 try:
     authenticator = stauth.Authenticate(
-        credentials,           # full [credentials] table from TOML
-        cookie_name,           # cookie name
-        cookie_key,            # cookie key
-        cookie_expiry          # cookie expiry
+        credentials,   # <-- plain Python dict (mutable)
+        cookie_name,
+        cookie_key,
+        cookie_expiry,
     )
-    st.write("BOOT 3: authenticator created")
+    st.write("BOOT 5: authenticator created")
 except Exception as e:
     st.error("ERROR creating authenticator")
     st.exception(e)
     st.stop()
 
-# --- Login UI ---
+# ---- Login form ----
 try:
+    # Order: form title first, then location ("main" or "sidebar")
     name, auth_status, username = authenticator.login("Login", "main")
-    st.write("BOOT 4: login form rendered")
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
     st.stop()
 
-# --- Routing ---
+# ---- Main routing ----
 if auth_status:
     authenticator.logout("Logout", "sidebar")
     st.success(f"Welcome, {name}!")
     st.title("Trend Edge Scanner")
-    st.write("BOOT 5: Logged in, main content goes here.")
+    st.write("✓ Logged in — put your main app content here.")
 elif auth_status is False:
     st.error("Username/password is incorrect")
 else:
-    st.warning("Please enter your username and password")
+    st.info("Please enter your username and password.")
