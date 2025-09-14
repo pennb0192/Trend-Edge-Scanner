@@ -52,8 +52,7 @@ except Exception as e:
 
 # ---- Login form ----
 try:
-    # Order: form title first, then location ("main" or "sidebar")
-    name, auth_status, username = authenticator.login("Login", "main")
+    name, auth_status, username = authenticator.login("Login", location="main")
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
