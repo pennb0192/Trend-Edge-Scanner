@@ -1,42 +1,44 @@
 import streamlit as st
+import streamlit_authenticator as stauth
 
-st.set_page_config(page_title="Trend Edge Scanner", page_icon="📈", layout="wide")
+st.set_page_config(page_title="Trend Edge Scanner")
 
 st.write("BOOT 1: app.py loaded")
 
 # ---------- Load secrets ----------
 try:
-    credentials = st.secrets["credentials"]      # from Secrets Manager
-    cookie_cfg  = st.secrets["cookie"]
+    raw_credentials = st.secrets["credentials"]   # read-only object
+    raw_cookie = st.secrets["cookie"]             # read-only object
     st.write("BOOT 2: secrets loaded")
 except Exception as e:
     st.error("ERROR loading secrets")
     st.exception(e)
     st.stop()
 
-# ---------- Prepare cookie values ----------
-try:
-    cookie_name = cookie_cfg["name"]
-    cookie_key  = cookie_cfg["key"]
-    # expiry may be int or string; cast to int
-    cookie_days = int(cookie_cfg["expiry_days"])
-    st.write("BOOT 3: credentials & cookie prepared")
-except Exception as e:
-    st.error("ERROR preparing credentials & cookie")
-    st.exception(e)
-    st.stop()
+# ---------- Convert to mutable dicts ----------
+# Build a plain-Python dict from st.secrets so the library can mutate it
+credentials = {"usernames": {}}
+for user, data in raw_credentials["usernames"].items():
+    credentials["usernames"][user] = {
+        "email": data["email"],
+        "name": data["name"],
+        "password": data["password"],
+    }
 
-# ---------- Authenticator ----------
-try:
-    import streamlit_authenticator as stauth
+cookie_name = raw_cookie.get("name", "trend_edge_auth")
+cookie_key = raw_cookie.get("key", "change_this_key")
+cookie_days = int(raw_cookie.get("expiry_days", 30))
 
+st.write("BOOT 3: credentials & cookie prepared")
+
+# ---------- Create authenticator ----------
+try:
     authenticator = stauth.Authenticate(
-        credentials,     # the whole [credentials] table
+        credentials,
         cookie_name,
         cookie_key,
         cookie_days,
     )
-    st.write("BOOT 4: streamlit_authenticator imported")
     st.write("BOOT 5: authenticator created")
 except Exception as e:
     st.error("ERROR creating authenticator")
@@ -45,12 +47,12 @@ except Exception as e:
 
 # ---------- Login UI ----------
 try:
-    # returns (name, auth_status, username) AFTER the user submits;
-    # returns None while waiting for input
+    # NOTE: label first, then location (as keyword)
     auth_result = authenticator.login("Login", location="main")
 
+    # When the form hasn’t been submitted yet, login() returns None
     if auth_result is None:
-        st.stop()  # show the form and wait
+        st.stop()
 
     name, auth_status, username = auth_result
 except Exception as e:
@@ -63,9 +65,6 @@ if auth_status:
     authenticator.logout("Logout", "sidebar")
     st.success(f"Welcome, {name}!")
     st.title("Trend Edge Scanner")
-    st.write("You're logged in. Main content goes here.")
-elif auth_status is False:
-    st.error("Username/password is incorrect")
+    st.write("Logged in — put your main content here.")
 else:
-    st.info("Please enter your username and password.")
-
+    st.error("Username or password is incorrect")
