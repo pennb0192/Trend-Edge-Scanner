@@ -1,48 +1,33 @@
 import streamlit as st
-import traceback
+import streamlit_authenticator as stauth
 
-st.set_page_config(page_title="Trend Edge Scanner", layout="wide")
-
+# --- BOOT 1: app.py loaded ---
 st.write("BOOT 1: app.py loaded")
 
-# ---- Try to read secrets safely ----
+# --- BOOT 2: load secrets ---
 try:
-    sec = st.secrets.get("auth_config", {})
+    credentials = st.secrets["credentials"]
+    cookie_cfg = st.secrets["cookie"]
     st.write("BOOT 2: secrets loaded")
-    st.write({k: list(v.keys()) if isinstance(v, dict) else "ok" for k, v in sec.items()})
+    st.json({"credentials": "ok", "cookie": "ok"})
 except Exception as e:
-    st.error("ERROR reading secrets")
+    st.error("ERROR loading secrets")
     st.exception(e)
     st.stop()
 
-# ---- Build MUTABLE copies for streamlit-authenticator ----
+# --- BOOT 3: prepare credentials & cookie ---
 try:
-    creds_src = sec.get("credentials", {}).get("usernames", {})
-    usernames = {
-        u: {"email": d["email"], "name": d["name"], "password": d["password"]}
-        for u, d in creds_src.items()
-    }
-    credentials = {"usernames": usernames}
-    cookie_cfg = sec.get("cookie", {})
-    cookie_name = cookie_cfg.get("name", "trend_edge_auth")
-    cookie_key = cookie_cfg.get("key", "replace_me_key")
-    cookie_days = int(cookie_cfg.get("expiry_days", 30))
+    cookie_name = cookie_cfg.get("name")
+    cookie_key = cookie_cfg.get("key")
+    cookie_days = cookie_cfg.get("expiry_days")
+
     st.write("BOOT 3: credentials & cookie prepared")
 except Exception as e:
-    st.error("ERROR building credentials from secrets")
+    st.error("ERROR preparing credentials")
     st.exception(e)
     st.stop()
 
-# ---- Import authenticator only after we know creds exist ----
-try:
-    import streamlit_authenticator as stauth
-    st.write("BOOT 4: streamlit_authenticator imported")
-except Exception as e:
-    st.error("ERROR importing streamlit_authenticator")
-    st.exception(e)
-    st.stop()
-
-# ---- Create authenticator ----
+# --- BOOT 4: import authenticator ---
 try:
     authenticator = stauth.Authenticate(
         credentials,
@@ -56,14 +41,12 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# --- Login UI ---
-# --- Login UI ---
+# --- BOOT 6: Login UI ---
 try:
-    # Streamlit Authenticator: returns a tuple OR None while waiting for input
-   auth_result = authenticator.login("main", "Login"))
+    # CORRECTED CALL: no duplicate location argument
+    auth_result = authenticator.login(location="main", form_name="Login")
 
     if auth_result is None:
-        # User hasn't submitted yet; pause the script cleanly
         st.write("Waiting for credentials...")
         st.stop()
 
@@ -75,16 +58,15 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# ---- Main routing ----
+# --- BOOT 7: Main routing ---
 if auth_status:
     authenticator.logout("Logout", "sidebar")
     st.success(f"Welcome, {name}!")
     st.title("Trend Edge Scanner")
     st.write("BOOT 7: logged in, main content goes here.")
+
 elif auth_status is False:
     st.error("Username/password is incorrect")
-elif auth_status is None:
-    st.warning("Please enter your username and password")
 
 else:
-    st.info("Please log in.")
+    st.warning("Please enter your username and password")
