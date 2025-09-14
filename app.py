@@ -1,45 +1,35 @@
 import streamlit as st
 import streamlit_authenticator as stauth
 
-st.set_page_config(page_title="Trend Edge Scanner")
-
+# ---- Boot step 1 ----
 st.write("BOOT 1: app.py loaded")
 
-# ---- Load & prepare config from Secrets (read-only) ----
+# ---- Load secrets ----
 try:
-    sec = st.secrets
+    credentials = st.secrets["credentials"]
+    cookie = st.secrets["cookie"]
     st.write("BOOT 2: secrets loaded")
-    st.json({
-        "credentials": "ok" if "credentials" in sec else "missing",
-        "cookie": "ok" if "cookie" in sec else "missing",
-    })
+    st.json({"credentials": "ok", "cookie": "ok"})
+except Exception as e:
+    st.error("ERROR loading secrets")
+    st.exception(e)
+    st.stop()
 
-    # Build a *mutable* credentials dict from the read-only secrets
-    raw_users = sec["credentials"]["usernames"]
-    creds_usernames = {}
-    for uname, u in raw_users.items():
-        creds_usernames[uname] = {
-            "email": u["email"],
-            "name": u["name"],
-            "password": u["password"],  # <-- bcrypt hash from your Secrets
-        }
-    credentials = {"usernames": creds_usernames}
-
-    cookie_cfg = sec["cookie"]
-    cookie_name = cookie_cfg["name"]
-    cookie_key = cookie_cfg["key"]
-    cookie_expiry = int(cookie_cfg.get("expiry_days", 30))
-
+# ---- Prepare credentials & cookie ----
+try:
+    cookie_name = cookie["name"]
+    cookie_key = cookie["key"]
+    cookie_expiry = cookie["expiry_days"]
     st.write("BOOT 3: credentials & cookie prepared")
 except Exception as e:
-    st.error("ERROR loading secrets / preparing configs")
+    st.error("ERROR preparing credentials & cookie")
     st.exception(e)
     st.stop()
 
 # ---- Create authenticator ----
 try:
     authenticator = stauth.Authenticate(
-        credentials,   # <-- plain Python dict (mutable)
+        credentials,
         cookie_name,
         cookie_key,
         cookie_expiry,
@@ -52,14 +42,13 @@ except Exception as e:
 
 # ---- Login form ----
 try:
-    # v0.4.2 returns None until the form is submitted
-    auth_result = authenticator.login("Login", location="main")
+    # v0.4.2 returns None until form is submitted
+    auth_result = authenticator.login("main", "Login")
 
     if auth_result is None:
-        # Form not submitted yet; stop the script cleanly
         st.stop()
 
-    # After form submit, this is a tuple
+    # After submit, returns (name, auth_status, username)
     name, auth_status, username = auth_result
 
 except Exception as e:
@@ -72,8 +61,10 @@ if auth_status:
     authenticator.logout("Logout", "sidebar")
     st.success(f"Welcome, {name}!")
     st.title("Trend Edge Scanner")
-    st.write("✓ Logged in — put your main app content here.")
+    st.write("✔ Logged in – put your main app content here.")
+
 elif auth_status is False:
     st.error("Username/password is incorrect")
+
 else:
     st.info("Please enter your username and password.")
