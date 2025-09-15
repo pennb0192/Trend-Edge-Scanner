@@ -1,42 +1,63 @@
-import json
 import streamlit as st
-import streamlit_authenticator as stauth
+import traceback
 
-st.set_page_config(page_title="Trend Edge Scanner", layout="centered")
+st.set_page_config(page_title="Trend Edge Scanner", layout="wide")
 
 st.write("BOOT 1: app.py loaded")
 
-# ---- Load & prepare secrets -------------------------------------------------
+# ---- Try to read secrets safely ----
 try:
-    # sanity log
+    sec = st.secrets
     st.write("BOOT 2: secrets loaded")
-    st.json({
-        "credentials": "ok" if "credentials" in st.secrets else "missing",
-        "cookie": "ok" if "cookie" in st.secrets else "missing",
+    st.write({
+        "credentials": "ok" if "credentials" in sec else "missing",
+        "cookie": "ok" if "cookie" in sec else "missing",
     })
-
-    # Convert Streamlit Secrets object into plain Python dicts
-    # (streamlit_authenticator mutates the dict internally; Secrets is read-only)
-    credentials = json.loads(json.dumps(st.secrets["credentials"]))
-    cookie = json.loads(json.dumps(st.secrets["cookie"]))
-
-    cookie_name = cookie.get("name")
-    cookie_key = cookie.get("key")
-    cookie_expiry = int(cookie.get("expiry_days", 30))
-
-    st.write("BOOT 3: credentials & cookie prepared")
 except Exception as e:
-    st.error("ERROR loading secrets")
+    st.error("ERROR reading secrets")
     st.exception(e)
     st.stop()
 
-# ---- Create authenticator ---------------------------------------------------
+# ---- Build credentials & cookie config ----
+try:
+    creds_src = sec["credentials"]["usernames"]
+    usernames = {
+        u: {
+            "email": d["email"],
+            "name": d["name"],
+            "password": d["password"],
+        }
+        for u, d in creds_src.items()
+    }
+    credentials = {"usernames": usernames}
+
+    cookie_cfg = sec["cookie"]
+    cookie_name = cookie_cfg.get("name", "trend_edge_auth")
+    cookie_key = cookie_cfg.get("key", "replace_me_key")
+    cookie_days = int(cookie_cfg.get("expiry_days", 30))
+
+    st.write("BOOT 3: credentials & cookie prepared")
+except Exception as e:
+    st.error("ERROR building credentials from secrets")
+    st.exception(e)
+    st.stop()
+
+# ---- Import authenticator ----
+try:
+    import streamlit_authenticator as stauth
+    st.write("BOOT 4: streamlit_authenticator imported")
+except Exception as e:
+    st.error("ERROR importing streamlit_authenticator")
+    st.exception(e)
+    st.stop()
+
+# ---- Create authenticator ----
 try:
     authenticator = stauth.Authenticate(
-        credentials,       # full [credentials] table as a plain dict
-        cookie_name,       # cookie name
-        cookie_key,        # signature key
-        cookie_expiry,     # expiry days (int)
+        credentials,
+        cookie_name,
+        cookie_key,
+        cookie_days,
     )
     st.write("BOOT 5: authenticator created")
 except Exception as e:
@@ -44,30 +65,22 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# ---- Login form --------------------------------------------------------------
+# ---- Login UI ----
 try:
-    # streamlit-authenticator v0.4.2: `login(location="main")`
-    # It returns None until the user submits; then returns (name, auth_status, username)
-    auth_result = authenticator.login(location="main")
-
-    if auth_result is None:
-        # Form not submitted yet; stop the script cleanly so only the form shows
-        st.stop()
-
-    name, auth_status, username = auth_result
-
+    name, auth_status, username = authenticator.login("Login", location="main")
+    st.write("BOOT 6: login called", {"auth_status": auth_status})
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
     st.stop()
 
-# ---- Main routing ------------------------------------------------------------
+# ---- Main routing ----
 if auth_status:
     authenticator.logout("Logout", "sidebar")
     st.success(f"Welcome, {name}!")
     st.title("Trend Edge Scanner")
-    st.write("✅ Logged in — put your main app content here.")
+    st.write("BOOT 7: logged in, main content goes here.")
 elif auth_status is False:
-    st.error("Username/password is incorrect")
+    st.error("Username/password is incorrect.")
 else:
-    st.info("Please enter your username and password.")
+    st.info("Please log in.")
