@@ -43,13 +43,13 @@ except Exception as e:
 
 # ---------- Login UI ----------
 try:
-    login_result = authenticator.login("Login", "main")  # shows a form in MAIN
+    # Only pass location (new API)
+    login_result = authenticator.login(location="main")
 
-    # Before form submit this is None; keep form on screen.
     if login_result is None:
         st.stop()
 
-    # After submit, unpack to (name, auth_status, username)
+    # New API: returns (name, authentication_status, username)
     name, auth_status, username = login_result
 except Exception as e:
     st.error("ERROR during login()")
