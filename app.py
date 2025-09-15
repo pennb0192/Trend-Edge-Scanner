@@ -63,7 +63,7 @@ except Exception as e:
 
 # ---------- Login UI ----------
 try:
-    name, auth_status, username = authenticator.login("Login", location="main")
+    name, auth_status, username = authenticator.login("Login", "main")
 
     if auth_status is False:
         st.error("Username/password is incorrect.")
