@@ -67,8 +67,7 @@ except Exception as e:
 
 # ---- Login UI ----
 try:
-name, auth_status, username = authenticator.login("Login", "main")
-
+    name, auth_status, username = authenticator.login("Login", "main")
     st.write("BOOT 6: login called", {"auth_status": auth_status})
 except Exception as e:
     st.error("ERROR during login()")
