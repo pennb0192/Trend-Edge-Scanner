@@ -88,8 +88,8 @@ if auth_status:
     authenticator.logout("Logout", "sidebar")
     st.success(f"Welcome, {name}!")
     st.title("Trend Edge Scanner")
-    st.write("BOOT 7: logged in, main content goes here.")
+    st.write("Logged in — main app content goes here.")
 elif auth_status is False:
     st.error("Username/password is incorrect.")
 else:
-    st.info("Please log in.")
+    st.info("Please enter your **username** (not email) and password, then click **Login**.")
