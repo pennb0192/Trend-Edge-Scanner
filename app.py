@@ -61,24 +61,18 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# ------------- Login UI -------------
+# -------- Login UI --------
 try:
-    # pass location only once
-    login_result = authenticator.login("Login", location="main")  # v0.4.x returns None until submit
-
-    # If the user hasn't pressed the Login button yet, stop rendering here
-    if login_result is None:
-        st.stop()
-
-    # After submit, unpack the tuple
-    name, auth_status, username = login_result
+    # Correct usage: first argument = form name, pass location separately
+    name, auth_status, username = authenticator.login(
+        "Login",  # form name
+        location="main"  # location (main, sidebar, or unrendered)
+    )
 
     if auth_status is False:
         st.error("Username/password is incorrect.")
-        st.stop()
     elif auth_status is None:
         st.warning("Please enter your username and password.")
-        st.stop()
     else:
         st.success(f"Welcome, {name}! ✅ You are logged in as {username}")
 
