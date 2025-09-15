@@ -1,43 +1,42 @@
+import json
 import streamlit as st
 import streamlit_authenticator as stauth
 
-st.set_page_config(page_title="Trend Edge Scanner")
+st.set_page_config(page_title="Trend Edge Scanner", layout="centered")
 
 st.write("BOOT 1: app.py loaded")
 
-# ---- Load and normalize secrets ----
+# ---- Load & prepare secrets -------------------------------------------------
 try:
-    # Pull from Streamlit Secrets
-    raw_credentials = st.secrets["credentials"]
-    raw_cookie      = st.secrets["cookie"]
+    # sanity log
     st.write("BOOT 2: secrets loaded")
-    st.json({"credentials": "ok", "cookie": "ok"})
+    st.json({
+        "credentials": "ok" if "credentials" in st.secrets else "missing",
+        "cookie": "ok" if "cookie" in st.secrets else "missing",
+    })
+
+    # Convert Streamlit Secrets object into plain Python dicts
+    # (streamlit_authenticator mutates the dict internally; Secrets is read-only)
+    credentials = json.loads(json.dumps(st.secrets["credentials"]))
+    cookie = json.loads(json.dumps(st.secrets["cookie"]))
+
+    cookie_name = cookie.get("name")
+    cookie_key = cookie.get("key")
+    cookie_expiry = int(cookie.get("expiry_days", 30))
+
+    st.write("BOOT 3: credentials & cookie prepared")
 except Exception as e:
     st.error("ERROR loading secrets")
     st.exception(e)
     st.stop()
 
-# Convert Secrets (read-only mapping) -> regular dicts
-def to_plain_dict(secrets_mapping):
-    # handles nested Secrets objects as plain dicts
-    return {k: (to_plain_dict(v) if hasattr(v, "keys") else v) for k, v in secrets_mapping.items()}
-
-credentials = to_plain_dict(raw_credentials)
-cookie      = to_plain_dict(raw_cookie)
-
-st.write("BOOT 3: credentials & cookie prepared")
-
-# ---- Create authenticator ----
+# ---- Create authenticator ---------------------------------------------------
 try:
-    cookie_name   = cookie.get("name", "app_auth")
-    cookie_key    = cookie.get("key", "change_me")
-    cookie_expiry = cookie.get("expiry_days", 30)
-
     authenticator = stauth.Authenticate(
-        credentials,     # MUST be a plain dict, not Secrets
-        cookie_name,
-        cookie_key,
-        cookie_expiry,
+        credentials,       # full [credentials] table as a plain dict
+        cookie_name,       # cookie name
+        cookie_key,        # signature key
+        cookie_expiry,     # expiry days (int)
     )
     st.write("BOOT 5: authenticator created")
 except Exception as e:
@@ -45,16 +44,16 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# ---- Login form ----
+# ---- Login form --------------------------------------------------------------
 try:
-    # streamlit-authenticator v0.4.2 returns None until the form is submitted
-    auth_result = authenticator.login("Login", "main")  # form_name, location
+    # streamlit-authenticator v0.4.2: `login(location="main")`
+    # It returns None until the user submits; then returns (name, auth_status, username)
+    auth_result = authenticator.login(location="main")
 
     if auth_result is None:
-        # Form not submitted yet — pause the script so the page renders the form
+        # Form not submitted yet; stop the script cleanly so only the form shows
         st.stop()
 
-    # After submit, this is a (name, auth_status, username) tuple
     name, auth_status, username = auth_result
 
 except Exception as e:
@@ -62,12 +61,12 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# ---- Main routing ----
+# ---- Main routing ------------------------------------------------------------
 if auth_status:
     authenticator.logout("Logout", "sidebar")
     st.success(f"Welcome, {name}!")
     st.title("Trend Edge Scanner")
-    st.write("You are logged in — put your main app content here.")
+    st.write("✅ Logged in — put your main app content here.")
 elif auth_status is False:
     st.error("Username/password is incorrect")
 else:
