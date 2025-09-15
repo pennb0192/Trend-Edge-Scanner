@@ -43,12 +43,20 @@ except Exception as e:
 
 # ---------- Login UI ----------
 try:
-    auth_result = authenticator.login("Login", "main")  # location ONLY
+    # Try the 0.4.x+ signature first (keywords avoid confusion)
+    try:
+        auth_result = authenticator.login(form_name="Login", location="main")
+    except TypeError:
+        # Fallback for older versions (<=0.3.x) which only take location
+        auth_result = authenticator.login("main")
+
+    # On 0.4.x this returns None until the form is submitted
     if auth_result is None:
         st.stop()
 
-    # After submit, unpack tuple
+    # After submit this is a tuple: (name, auth_status, username)
     name, auth_status, username = auth_result
+
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
