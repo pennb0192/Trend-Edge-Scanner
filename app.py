@@ -67,8 +67,17 @@ except Exception as e:
 
 # ---- Login UI ----
 try:
-    name, auth_status = authenticator.login("Login", "main")
+    # v0.4.2: (location, form_name) and returns None until you submit
+    auth_result = authenticator.login("main", "Login")
+
+    if auth_result is None:
+        # Form not submitted yet — show the form and stop cleanly
+        st.stop()
+
+    # After submit, unpack (name, auth_status, username)
+    name, auth_status, username = auth_result
     st.write("BOOT 6: login called", {"auth_status": auth_status})
+
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
