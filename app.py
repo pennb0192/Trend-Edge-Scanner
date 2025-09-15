@@ -61,17 +61,18 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# ---------- Login UI ----------
+# ----------------- Login UI -----------------
 try:
-    name, auth_status, username = authenticator.login("Login", "main")
-
+    name, auth_status, username = authenticator.login(
+        "Login",
+        location="main"
+    )
     if auth_status is False:
         st.error("Username/password is incorrect.")
     elif auth_status is None:
         st.warning("Please enter your username and password.")
     else:
         st.success(f"Welcome, {name}! ✅ You are logged in as {username}")
-
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
