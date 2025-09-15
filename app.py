@@ -42,27 +42,25 @@ except Exception as e:
     st.stop()
 
 # ---------- Login UI ----------
-# NOTE: In st-authenticator 0.4.x the API returns a tuple (name, status, username).
-# Before the form is submitted it returns (None, None, None).
 try:
-    name, auth_status, username = authenticator.login("main")  # location ONLY
+    auth_result = authenticator.login("Login", "main")  # location ONLY
+    if auth_result is None:
+        st.stop()
+
+    # After submit, unpack tuple
+    name, auth_status, username = auth_result
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
     st.stop()
 
-# Helpful, temporary debug line. You can delete later.
-st.write(f"DEBUG → auth_status={auth_status} user={username}")
-
 # ---------- Main routing ----------
-if auth_status is True:
-    # show a logout button in the sidebar
+if auth_status:
     authenticator.logout("Logout", "sidebar")
-
     st.success(f"Welcome, {name}! ✅ You are logged in as {username}")
     st.title("Trend Edge Scanner")
 
-    # --- Demo content so you can see something after login ---
+    # --- Demo content so you see something after login ---
     st.write("This content only shows when you are authenticated.")
     col1, col2 = st.columns(2)
     with col1:
@@ -78,6 +76,5 @@ if auth_status is True:
 elif auth_status is False:
     st.error("Username/password is incorrect.")
 else:
-    # auth_status is None (form not submitted yet or cookie not validated)
-    st.info("Please log in above to continue.")
+    st.info("Please log in.")
     st.stop()
