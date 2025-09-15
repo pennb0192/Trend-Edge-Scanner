@@ -43,14 +43,20 @@ except Exception as e:
 
 # ---------- Login UI ----------
 try:
-    # v0.4.x: pass LOCATION ONLY ("main", "sidebar", or "unrendered")
-    login_result = authenticator.login("main")
-    # show one-line debug so we can tell what's happening
-    st.write("DEBUG login_result type:", type(login_result).__name__)
+    login_result = authenticator.login("Login", "main")
 
+    # If the form hasn't been submitted yet
     if login_result is None:
-        # Form rendered but not submitted yet
         st.stop()
+
+    # Once submitted, unpack into name, auth_status, username
+    name, auth_status, username = login_result
+    st.write(f"DEBUG login_result unpacked: {login_result}")
+
+except Exception as e:
+    st.error("ERROR during login()")
+    st.exception(e)
+    st.stop()
 
     # After submit: expected tuple -> (name, auth_status, username)
     try:
