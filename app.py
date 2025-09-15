@@ -43,14 +43,15 @@ except Exception as e:
 
 # ---------- Login UI ----------
 try:
-    # Only pass location (new API)
-    login_result = authenticator.login(location="main")
+    # v0.4.x: call login() and read results from session_state
+    authenticator.login(location="main")
 
-    if login_result is None:
-        st.stop()
+    auth_status = st.session_state.get("authentication_status", None)
+    name = st.session_state.get("name", None)
+    username = st.session_state.get("username", None)
 
-    # New API: returns (name, authentication_status, username)
-    name, auth_status, username = login_result
+    # debug line (safe to leave in while testing)
+    st.write("DEBUG auth_status:", auth_status)
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
@@ -63,11 +64,10 @@ if auth_status:
     st.title("Trend Edge Scanner")
 
     # Demo content so you can see something
-    st.write("This content only shows when you are authenticated.")
-    c1, c2 = st.columns(2)
-    with c1:
+    col1, col2 = st.columns(2)
+    with col1:
         st.metric("Demo Metric", "42", "+3")
-    with c2:
+    with col2:
         st.write("Upload a CSV to test:")
         f = st.file_uploader("Choose a CSV", type=["csv"])
         if f is not None:
@@ -78,5 +78,4 @@ if auth_status:
 elif auth_status is False:
     st.error("Username/password is incorrect.")
 else:
-    # Rare edge when status is None after submit
     st.info("Please log in.")
