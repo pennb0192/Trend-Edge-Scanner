@@ -4,12 +4,12 @@ import streamlit as st
 st.set_page_config(page_title="Trend Edge Scanner", layout="wide")
 st.write("BOOT 1: app.py loaded")
 
-# ---------- Load & prep secrets ----------
+# ---------- Load & prepare secrets ----------
 try:
-    sec = st.secrets  # TOML from Streamlit Cloud
-    users_src = sec["credentials"]["usernames"]   # table [credentials.usernames]
-    # make a plain dict copy for streamlit-authenticator
-    credentials = {"usernames": {u: dict(users_src[u]) for u in users_src}}
+    sec = st.secrets  # TOML in Streamlit Secrets
+    src_users = sec["credentials"]["usernames"]
+    usernames = {u: dict(src_users[u]) for u in src_users}          # make it mutable
+    credentials = {"usernames": usernames}
 
     cookie_cfg = sec["cookie"]
     cookie_name = cookie_cfg.get("name", "trend_edge_auth")
@@ -24,7 +24,7 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# ---------- Authenticator ----------
+# ---------- Import & create authenticator ----------
 try:
     import streamlit_authenticator as stauth
     st.write("BOOT 4: streamlit_authenticator imported")
@@ -43,28 +43,14 @@ except Exception as e:
 
 # ---------- Login UI ----------
 try:
-    login_result = authenticator.login(location="main")
+    login_result = authenticator.login("Login", "main")  # shows a form in MAIN
 
-    # If the form hasn't been submitted yet
+    # Before form submit this is None; keep form on screen.
     if login_result is None:
         st.stop()
 
-    # Once submitted, unpack into name, auth_status, username
+    # After submit, unpack to (name, auth_status, username)
     name, auth_status, username = login_result
-    st.write(f"DEBUG login_result unpacked: {login_result}")
-
-except Exception as e:
-    st.error("ERROR during login()")
-    st.exception(e)
-    st.stop()
-
-    # After submit: expected tuple -> (name, auth_status, username)
-    try:
-        name, auth_status, username = login_result
-    except Exception:
-        st.error("Unexpected login() return format")
-        st.write(login_result)
-        st.stop()
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
@@ -76,12 +62,12 @@ if auth_status:
     st.success(f"Welcome, {name}! ✅ You are logged in as {username}")
     st.title("Trend Edge Scanner")
 
-    # --- Demo content so we can see something ---
+    # Demo content so you can see something
     st.write("This content only shows when you are authenticated.")
-    col1, col2 = st.columns(2)
-    with col1:
+    c1, c2 = st.columns(2)
+    with c1:
         st.metric("Demo Metric", "42", "+3")
-    with col2:
+    with c2:
         st.write("Upload a CSV to test:")
         f = st.file_uploader("Choose a CSV", type=["csv"])
         if f is not None:
@@ -92,4 +78,5 @@ if auth_status:
 elif auth_status is False:
     st.error("Username/password is incorrect.")
 else:
+    # Rare edge when status is None after submit
     st.info("Please log in.")
