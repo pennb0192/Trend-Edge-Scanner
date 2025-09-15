@@ -49,13 +49,19 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# --- Login form (v0.4.2 returns None until submitted) ---
+# ---- Login form ----
 try:
-    auth_result = authenticator.login("Login", "main")  # form_name, location
+    # Show login form
+    name, auth_status, username = authenticator.login(
+        form_name="Login",
+        location="main"
+    )
 
-    if auth_result is None:
-        # Form hasn’t been submitted yet
-        st.stop()
+except Exception as e:
+    st.error("ERROR during login()")
+    st.exception(e)
+    st.stop()
+
 
     name, auth_status, username = auth_result
 except Exception as e:
