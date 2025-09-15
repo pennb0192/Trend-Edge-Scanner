@@ -43,7 +43,7 @@ except Exception as e:
 
 # ---------- Login UI ----------
 try:
-    login_result = authenticator.login("Login", "main")
+    login_result = authenticator.login(location="main")
 
     # If the form hasn't been submitted yet
     if login_result is None:
