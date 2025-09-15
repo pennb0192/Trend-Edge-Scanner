@@ -54,9 +54,12 @@ except Exception as e:
 
 # ---------- Login UI ----------
 try:
-    auth_result = authenticator.login("Login", "main")  # location ONLY
+    # location ONLY: "main", "sidebar", or "unrendered"
+    auth_result = authenticator.login("main")
     if auth_result is None:
         st.stop()
+
+    # After submit: returns tuple -> (name, auth_status, username)
     name, auth_status, username = auth_result
 except Exception as e:
     st.error("ERROR during login()")
