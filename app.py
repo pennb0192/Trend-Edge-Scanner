@@ -1,29 +1,15 @@
 # app.py
-import json
 import streamlit as st
 
 st.set_page_config(page_title="Trend Edge Scanner", layout="wide")
-
 st.write("BOOT 1: app.py loaded")
 
 # ---------- Load & prepare secrets ----------
 try:
-    # We expect your Streamlit secrets to be in TOML like:
-    # [credentials.usernames.pennb0192]
-    # email = "pennb.0192@gmail.com"
-    # name  = "pennb0192"
-    # password = "$2b$12$...."  (bcrypt hash)
-    #
-    # [cookie]
-    # name = "trend_edge_auth"
-    # key  = "549852344888"
-    # expiry_days = 30
     sec = st.secrets  # immutable mapping
-
-    # Make *mutable* copies for streamlit-authenticator
+    # Make mutable copies for streamlit-authenticator
     src_users = sec["credentials"]["usernames"]
-    usernames = {u: dict(src_users[u]) for u in src_users}  # plain dict copy
-    credentials = {"usernames": usernames}
+    credentials = {"usernames": {u: dict(src_users[u]) for u in src_users}}
 
     cookie_cfg = sec["cookie"]
     cookie_name = cookie_cfg.get("name", "trend_edge_auth")
@@ -41,7 +27,6 @@ except Exception as e:
 # ---------- Import and create authenticator ----------
 try:
     import streamlit_authenticator as stauth
-    st.write("BOOT 4: streamlit_authenticator imported")
 
     authenticator = stauth.Authenticate(
         credentials,
@@ -49,6 +34,7 @@ try:
         cookie_key,
         cookie_days,
     )
+    st.write("BOOT 4: streamlit_authenticator imported")
     st.write("BOOT 5: authenticator created")
 except Exception as e:
     st.error("ERROR creating authenticator")
@@ -56,22 +42,23 @@ except Exception as e:
     st.stop()
 
 # ---------- Login UI ----------
+# NOTE: In st-authenticator 0.4.x the API returns a tuple (name, status, username).
+# Before the form is submitted it returns (None, None, None).
 try:
-    # v0.4.x returns None until the form is submitted
-    auth_result = authenticator.login("main")
-    if auth_result is None:
-        st.stop()
-
-    # After submit: tuple -> (name, auth_status, username)
-    name, auth_status, username = auth_result
+    name, auth_status, username = authenticator.login("main")  # location ONLY
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
     st.stop()
 
+# Helpful, temporary debug line. You can delete later.
+st.write(f"DEBUG → auth_status={auth_status} user={username}")
+
 # ---------- Main routing ----------
-if auth_status:
+if auth_status is True:
+    # show a logout button in the sidebar
     authenticator.logout("Logout", "sidebar")
+
     st.success(f"Welcome, {name}! ✅ You are logged in as {username}")
     st.title("Trend Edge Scanner")
 
@@ -91,4 +78,6 @@ if auth_status:
 elif auth_status is False:
     st.error("Username/password is incorrect.")
 else:
-    st.info("Please log in.")
+    # auth_status is None (form not submitted yet or cookie not validated)
+    st.info("Please log in above to continue.")
+    st.stop()
