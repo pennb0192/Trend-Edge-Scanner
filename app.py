@@ -41,34 +41,41 @@ except Exception as e:
     st.exception(e)
     st.stop()
 
-# ---------- Login UI ----------
+# ---------- Login UI (robust) ----------
 try:
-    # Try the 0.4.x+ signature first (keywords avoid confusion)
+    # Use keywords so the version can't confuse args
     try:
         auth_result = authenticator.login(form_name="Login", location="main")
     except TypeError:
-        # Fallback for older versions (<=0.3.x) which only take location
+        # very old versions only accept location
         auth_result = authenticator.login("main")
-
-    # On 0.4.x this returns None until the form is submitted
-    if auth_result is None:
-        st.stop()
-
-    # After submit this is a tuple: (name, auth_status, username)
-    name, auth_status, username = auth_result
-
 except Exception as e:
     st.error("ERROR during login()")
     st.exception(e)
     st.stop()
 
+# Figure out auth status no matter which version you have
+name = username = None
+auth_status = None
+
+if auth_result is not None:
+    # 0.4.x returns a tuple AFTER submit
+    name, auth_status, username = auth_result
+else:
+    # Sometimes 0.4.x returns None on rerun; pull from session_state
+    auth_status = st.session_state.get("authentication_status")
+    name = st.session_state.get("name")
+    username = st.session_state.get("username")
+
+st.write("DEBUG auth_status:", auth_status)  # you can remove later
+
 # ---------- Main routing ----------
-if auth_status:
+if auth_status is True:
     authenticator.logout("Logout", "sidebar")
     st.success(f"Welcome, {name}! ✅ You are logged in as {username}")
     st.title("Trend Edge Scanner")
 
-    # --- Demo content so you see something after login ---
+    # Demo content (so you see something)
     st.write("This content only shows when you are authenticated.")
     col1, col2 = st.columns(2)
     with col1:
@@ -83,6 +90,7 @@ if auth_status:
 
 elif auth_status is False:
     st.error("Username/password is incorrect.")
+
 else:
-    st.info("Please log in.")
-    st.stop()
+    # Not logged in yet (or awaiting form submit)
+    st.info("Please log in above.")
