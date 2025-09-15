@@ -58,7 +58,7 @@ except Exception as e:
 # ---------- Login UI ----------
 try:
     # v0.4.x returns None until the form is submitted
-    auth_result = authenticator.login("Login", "main")
+    auth_result = authenticator.login("main")
     if auth_result is None:
         st.stop()
 
