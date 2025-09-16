@@ -29,7 +29,7 @@ authenticator = stauth.Authenticate(
 )
 
 # Login form
-name, auth_status, username = authenticator.login("Login", location="main")
+name, auth_status, username = authenticator.login("Login")
 
 # Login logic
 if auth_status == False:
