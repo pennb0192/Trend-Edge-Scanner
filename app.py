@@ -3,7 +3,7 @@ import streamlit_authenticator as stauth
 import yaml
 from yaml.loader import SafeLoader
 
-# Load secrets
+# Load credentials from secrets.toml
 credentials = {
     "usernames": {
         "pennb0192": {
@@ -14,6 +14,7 @@ credentials = {
     }
 }
 
+# Cookie settings
 cookie = {
     "name": st.secrets["cookie"]["name"],
     "key": st.secrets["cookie"]["key"],
@@ -28,14 +29,14 @@ authenticator = stauth.Authenticate(
     cookie["expiry_days"]
 )
 
-# Login form
-name, auth_status, username = authenticator.login("Login")
+# Login form (with fixed location)
+name, auth_status, username = authenticator.login("Login", location="main")
 
 # Login logic
-if auth_status == False:
+if auth_status is False:
     st.error("Invalid username or password 😕")
 elif auth_status is None:
     st.warning("Please enter your credentials")
 elif auth_status:
     st.success(f"Welcome {name} 👋")
-    st.write("🔍 Trend Scanner is ready!")
+    st.write("📈 Trend Scanner is ready!")
