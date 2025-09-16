@@ -1,7 +1,7 @@
 import streamlit as st
 import streamlit_authenticator as stauth
 
-# 🔐 Load credentials from secrets.toml
+# Load user credentials from secrets.toml
 d = st.secrets["credentials"]["usernames"]["pennb0192"]
 u = {"email": d["email"], "name": d["name"], "password": d["password"]}
 
@@ -11,13 +11,14 @@ credentials = {
     }
 }
 
+# Cookie settings
 cookie = {
     "name": st.secrets["cookie"]["name"],
     "key": st.secrets["cookie"]["key"],
     "expiry_days": st.secrets["cookie"]["expiry_days"]
 }
 
-# ✅ Create the authenticator (NOTE: preauthorized is no longer passed here)
+# Setup authenticator (No preauthorized anymore)
 authenticator = stauth.Authenticate(
     credentials,
     cookie["name"],
@@ -25,32 +26,15 @@ authenticator = stauth.Authenticate(
     cookie["expiry_days"]
 )
 
-# 🔐 User login
+# Login form
 name, auth_status, username = authenticator.login("Login", "main")
 
-# 🚨 Handle login responses
-if auth_status is False:
+# Login logic
+if auth_status == False:
     st.error("Invalid username or password")
-
 elif auth_status is None:
     st.warning("Please enter your credentials")
-
 elif auth_status:
-    # 🧠 Add user registration section (optional)
-    with st.expander("🔐 Register a New User"):
-        try:
-            if authenticator.register_user(preauthorization=False):
-                st.success("User registered successfully!")
-        except Exception as e:
-            st.error(e)
-
-    # ✅ Logged in section
-    authenticator.logout("Logout", "sidebar")
-    st.sidebar.success(f"Welcome, {name} 👋")
-
-    st.title("📊 TrendEdge Scanner Dashboard")
-    st.write("You're now logged in and can access all features.")
-    
-    # 🔧 Placeholder: Add your scanner logic here
-    st.info("🚧 Scanner UI coming soon...")
-
+    st.success(f"Welcome {name} 👋🏽")
+    # 🔍 Scanner goes here (import scanner.py if needed)
+    st.write("🔎 Trend Scanner is ready!")
