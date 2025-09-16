@@ -1,24 +1,26 @@
 import streamlit as st
 import streamlit_authenticator as stauth
+import yaml
+from yaml.loader import SafeLoader
 
-# Load user credentials from secrets.toml
-d = st.secrets["credentials"]["usernames"]["pennb0192"]
-u = {"email": d["email"], "name": d["name"], "password": d["password"]}
-
+# Load secrets from .streamlit/secrets.toml
 credentials = {
     "usernames": {
-        "pennb0192": u
+        "pennb0192": {
+            "email": st.secrets["credentials"]["usernames.pennb0192.email"],
+            "name": st.secrets["credentials"]["usernames.pennb0192.name"],
+            "password": st.secrets["credentials"]["usernames.pennb0192.password"]
+        }
     }
 }
 
-# Cookie settings
 cookie = {
     "name": st.secrets["cookie"]["name"],
     "key": st.secrets["cookie"]["key"],
     "expiry_days": st.secrets["cookie"]["expiry_days"]
 }
 
-# Setup authenticator (No preauthorized anymore)
+# Authenticator setup (no preauthorized anymore)
 authenticator = stauth.Authenticate(
     credentials,
     cookie["name"],
@@ -26,8 +28,8 @@ authenticator = stauth.Authenticate(
     cookie["expiry_days"]
 )
 
-# Login form
-name, auth_status, username = authenticator.login("Login", "main")
+# Login form (correct keyword here: main without quotes)
+name, auth_status, username = authenticator.login("Login", location="main")
 
 # Login logic
 if auth_status == False:
@@ -37,4 +39,4 @@ elif auth_status is None:
 elif auth_status:
     st.success(f"Welcome {name} 👋🏽")
     # 🔍 Scanner goes here (import scanner.py if needed)
-    st.write("🔎 Trend Scanner is ready!")
+    st.write("🔍 Trend Scanner is ready!")
