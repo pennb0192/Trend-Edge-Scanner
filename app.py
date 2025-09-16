@@ -14,13 +14,14 @@ credentials = {
     }
 }
 
+# Cookie settings
 cookie = {
     "name": st.secrets["cookie"]["name"],
     "key": st.secrets["cookie"]["key"],
     "expiry_days": st.secrets["cookie"]["expiry_days"]
 }
 
-# Authenticator setup (no preauthorized anymore)
+# Authenticator setup
 authenticator = stauth.Authenticate(
     credentials,
     cookie["name"],
@@ -28,15 +29,13 @@ authenticator = stauth.Authenticate(
     cookie["expiry_days"]
 )
 
-# Login form (correct keyword here: main without quotes)
+# Login form
 name, auth_status, username = authenticator.login("Login", location="main")
 
-# Login logic
 if auth_status == False:
     st.error("Invalid username or password")
 elif auth_status is None:
     st.warning("Please enter your credentials")
 elif auth_status:
-    st.success(f"Welcome {name} 👋🏽")
-    # 🔍 Scanner goes here (import scanner.py if needed)
+    st.success(f"Welcome {name} 👋🏾")
     st.write("🔍 Trend Scanner is ready!")
