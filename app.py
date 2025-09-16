@@ -1,9 +1,12 @@
 import streamlit as st
 import streamlit_authenticator as stauth
+import copy
 
-# --- Load credentials and cookie settings from secrets.toml ---
-credentials = st.secrets["credentials"]
+# --- Load credentials from secrets.toml ---
+# Copy secrets into a modifiable dictionary
+credentials = copy.deepcopy(st.secrets["credentials"])
 
+# --- Load cookie settings ---
 cookie = {
     "name": st.secrets["cookie"]["name"],
     "key": st.secrets["cookie"]["key"],
